@@ -1,0 +1,45 @@
+//===-- engine_api.h ---------------------------------------------------*- C++ -*--===//
+//
+//                     The KLEE Symbolic Virtual Machine
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef ENGINE_API_H
+#define ENGINE_API_H
+
+#ifdef __USE_KLEE__
+  #include @ABSOLUTE_KLEE_H_PATH@
+  #define engine_report_error(file, line, message, suffix)  klee_report_error(file, line, message, suffix)
+  #define engine_warning(message)                           klee_warning(message)
+  #define engine_warning_once(message)                      klee_warning_once(message)
+  #define engine_make_symbolic(addr, nbytes, name)          klee_make_symbolic(addr, nbytes, name)
+  #define engine_is_symbolic(n)                             klee_is_symbolic(n)
+  #define engine_assume(condition)                          klee_assume(condition)
+  #define engine_range(begin, end, name)                    klee_range(begin, end, name)
+  #define engine_get_valuel(expr)                           klee_get_valuel(expr)
+  #define engine_prefer_cex(object, condition)              klee_prefer_cex(object, condition)
+  #define engine_posix_prefer_cex(object, ucondition)       klee_posix_prefer_cex(object, ucondition)
+  #define engine_check_memory_access(address, size)         klee_check_memory_access(address, size)
+  #define engine_mark_global(object)                        klee_mark_global(object)
+  #define engine_silent_exit(status)                        klee_silent_exit(status)
+#else
+  #include @ABSOLUTE_LLSC_H_PATH@
+  #define engine_report_error(file, line, message, suffix)  llsc_report_error(file, line, message, suffix)
+  #define engine_warning(message)                           llsc_warning(message)
+  #define engine_warning_once(message)                      llsc_warning_once(message)
+  #define engine_make_symbolic(addr, nbytes, name)          llsc_make_symbolic(addr, nbytes, name)
+  #define engine_is_symbolic(n)                             llsc_is_symbolic(n)
+  #define engine_assume(condition)                          llsc_assume(condition)
+  #define engine_range(begin, end, name)                    llsc_range(begin, end, name)
+  #define engine_get_valuel(expr)                           llsc_get_valuel(expr)
+  #define engine_prefer_cex(object, condition)              //llsc_prefer_cex(object, condition)
+  #define engine_posix_prefer_cex(object, ucondition)       //llsc_posix_prefer_cex(object, ucondition)
+  #define engine_check_memory_access(address, size)         //llsc_check_memory_access(address, size)
+  #define engine_mark_global(object)                        //llsc_mark_global(object)
+  #define engine_silent_exit(status)                        stop(status)
+#endif
+
+#endif /* ENGINE_API_H */

@@ -35,6 +35,8 @@ foreach (arch_ty ${bc_architectures})
     # Set specific compiler flags depending on the optimization
     if (engine_ty STREQUAL "klee")
         list(APPEND local_flags "-D__USE_KLEE__")
+    else()
+        list(APPEND local_flags "-U__USE_KLEE__")
     endif ()
 
     # Define suffix-specific optimizations
@@ -75,7 +77,7 @@ set(RUNTIME_LIBRARIES RuntimePOSIX)
 
 add_subdirectory(POSIX)
 
-add_custom_target(BuildKLEERuntimes
+add_custom_target(BuildPOSIXRuntimes
         ALL
         DEPENDS "${RUNTIME_LIBRARIES}"
         )

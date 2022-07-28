@@ -21,7 +21,7 @@
 #include "fd.h"
 
 #include "posix-runtime/Config/Version.h"
-#include "klee/klee.h"
+#include "posix-runtime/engine_api.h"
 
 #include <assert.h>
 #include <errno.h>

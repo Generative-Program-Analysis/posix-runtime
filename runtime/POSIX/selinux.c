@@ -13,7 +13,7 @@
 
 #ifdef HAVE_SELINUX_SELINUX_H
 
-#include "klee/klee.h"
+#include "posix-runtime/engine_api.h"
 
 #include <selinux/selinux.h>
 #include <stdlib.h>
@@ -49,7 +49,7 @@ int setfscreatecon(KLEE_SELINUX_CTX_CONST char *context) {
      char strings.. Also, make sure mcstrans > 0.2.8 for replay
      (important bug fixed) */
   if (context[0] != '\0' && context[1] == '\0')
-    klee_silent_exit(1);
+    engine_silent_exit(1);
 
   return -1;
 }

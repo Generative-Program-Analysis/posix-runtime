@@ -205,6 +205,37 @@ set(KLEE_RUNTIME_DIRECTORY "${CMAKE_BINARY_DIR}/runtime/lib")
 file(MAKE_DIRECTORY ${KLEE_RUNTIME_DIRECTORY})
 
 ################################################################################
+# LLSC and KLEE external header path
+################################################################################
+#set(ABSOLUTE_LLSC_H_PATH "")
+#set(ABSOLUTE_KLEE_H_PATH "")
+if (NOT DEFINED LLSC_HEADER_DIR)
+  message(FATAL_ERROR "Please provide llsc header path by passing `-DLLSC_HEADER_DIR=\"directory-to-your-llsc_client.h\"` to CMake.")
+endif()
+get_filename_component(ABSOLUTE_LLSC_H_PATH ${LLSC_HEADER_DIR} ABSOLUTE)
+if (NOT DEFINED KLEE_HEADER_DIR)
+  message(FATAL_ERROR "Please provide klee header path by passing `-DKLEE_HEADER_DIR=\"directory-to-your-klee.h\"` to CMake.")
+endif()
+get_filename_component(ABSOLUTE_KLEE_H_PATH ${KLEE_HEADER_DIR} ABSOLUTE)
+set(ABSOLUTE_LLSC_H_PATH "${ABSOLUTE_LLSC_H_PATH}/llsc_client.h")
+set(ABSOLUTE_KLEE_H_PATH "${ABSOLUTE_KLEE_H_PATH}/klee.h")
+message(STATUS "ABSOLUTE_LLSC_H_PATH : ${ABSOLUTE_LLSC_H_PATH}")
+message(STATUS "ABSOLUTE_KLEE_H_PATH : ${ABSOLUTE_KLEE_H_PATH}")
+check_include_file("${ABSOLUTE_LLSC_H_PATH}" HAVE_LLSC_H)
+check_include_file("${ABSOLUTE_KLEE_H_PATH}" HAVE_KLEE_H)
+if (NOT (HAVE_LLSC_H AND HAVE_KLEE_H))
+  message(FATAL_ERROR "Can not find llsc_client.h and klee.h")
+endif()
+set(ABSOLUTE_LLSC_H_PATH "\"${ABSOLUTE_LLSC_H_PATH}\"")
+set(ABSOLUTE_KLEE_H_PATH "\"${ABSOLUTE_KLEE_H_PATH}\"")
+
+################################################################################
+# Generate `engine_api.h`
+################################################################################
+configure_file(${CMAKE_SOURCE_DIR}/include/posix-runtime/engine_api.h.cmin
+  ${CMAKE_BINARY_DIR}/include/posix-runtime/engine_api.h)
+
+################################################################################
 # Generate `config.h`
 ################################################################################
 configure_file(${CMAKE_SOURCE_DIR}/include/posix-runtime/Config/config.h.cmin
@@ -215,21 +246,6 @@ configure_file(${CMAKE_SOURCE_DIR}/include/posix-runtime/Config/config.h.cmin
 ################################################################################
 include_directories("${CMAKE_BINARY_DIR}/include")
 include_directories("${CMAKE_SOURCE_DIR}/include")
-if (NOT DEFINED LLSC_HEADER_DIR)
-  message(FATAL_ERROR "Please provide llsc header path by passing `-DLLSC_HEADER_DIR=\"directory-to-your-llsc_client.h\"` to CMake.")
-endif()
-get_filename_component(ABSOLUTE_LLSC_H_PATH ${LLSC_HEADER_DIR} ABSOLUTE)
-include_directories("${ABSOLUTE_LLSC_H_PATH}")
-if (NOT DEFINED KLEE_HEADER_DIR)
-  message(FATAL_ERROR "Please provide klee header path by passing `-DKLEE_HEADER_DIR=\"directory-to-your-klee.h\"` to CMake.")
-endif()
-get_filename_component(ABSOLUTE_KLEE_H_PATH ${KLEE_HEADER_DIR} ABSOLUTE)
-include_directories("${ABSOLUTE_KLEE_H_PATH}")
-check_include_file("${ABSOLUTE_LLSC_H_PATH}/llsc_client.h" HAVE_LLSC_H)
-check_include_file("${ABSOLUTE_KLEE_H_PATH}/klee.h" HAVE_KLEE_H)
-if (NOT (HAVE_LLSC_H AND HAVE_KLEE_H))
-  message(FATAL_ERROR "Can not find llsc_client.h and klee.h")
-endif()
 
 
 ################################################################################

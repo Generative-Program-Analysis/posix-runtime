@@ -11,7 +11,7 @@
 #define _FILE_OFFSET_BITS 64
 #include "fd.h"
 
-#include "klee/klee.h"
+#include "posix-runtime/engine_api.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -31,20 +31,20 @@ exe_file_system_t __exe_fs;
    mostly care about sym case anyway. */
 
 
-exe_sym_env_t __exe_env = { 
-  {{ 0, eOpen | eReadable, 0, 0}, 
-   { 1, eOpen | eWriteable, 0, 0}, 
+exe_sym_env_t __exe_env = {
+  {{ 0, eOpen | eReadable, 0, 0},
+   { 1, eOpen | eWriteable, 0, 0},
    { 2, eOpen | eWriteable, 0, 0}},
   022,
   0,
   0
 };
 
-static void __create_new_dfile(exe_disk_file_t *dfile, unsigned size, 
+static void __create_new_dfile(exe_disk_file_t *dfile, unsigned size,
                                const char *name, struct stat64 *defaults) {
   struct stat64 *s = malloc(sizeof(*s));
   if (!s)
-    klee_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
+    engine_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
 
   const char *sp;
   char sname[64];
@@ -57,39 +57,39 @@ static void __create_new_dfile(exe_disk_file_t *dfile, unsigned size,
   dfile->size = size;
   dfile->contents = malloc(dfile->size);
   if (!dfile->contents)
-    klee_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
-  klee_make_symbolic(dfile->contents, dfile->size, name);
-  
-  klee_make_symbolic(s, sizeof(*s), sname);
+    engine_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
+  engine_make_symbolic(dfile->contents, dfile->size, name);
+
+  engine_make_symbolic(s, sizeof(*s), sname);
 
   /* For broken tests */
-  if (!klee_is_symbolic(s->st_ino) && 
+  if (!engine_is_symbolic(s->st_ino) &&
       (s->st_ino & 0x7FFFFFFF) == 0)
     s->st_ino = defaults->st_ino;
-  
+
   /* Important since we copy this out through getdents, and readdir
      will otherwise skip this entry. For same reason need to make sure
      it fits in low bits. */
-  klee_assume((s->st_ino & 0x7FFFFFFF) != 0);
+  engine_assume((s->st_ino & 0x7FFFFFFF) != 0);
 
   /* uclibc opendir uses this as its buffer size, try to keep
      reasonable. */
-  klee_assume((s->st_blksize & ~0xFFFF) == 0);
+  engine_assume((s->st_blksize & ~0xFFFF) == 0);
 
-  klee_prefer_cex(s, !(s->st_mode & ~(S_IFMT | 0777)));
-  klee_prefer_cex(s, s->st_dev == defaults->st_dev);
-  klee_prefer_cex(s, s->st_rdev == defaults->st_rdev);
-  klee_prefer_cex(s, (s->st_mode&0700) == 0600);
-  klee_prefer_cex(s, (s->st_mode&0070) == 0040);
-  klee_prefer_cex(s, (s->st_mode&0007) == 0004);
-  klee_prefer_cex(s, (s->st_mode&S_IFMT) == S_IFREG);
-  klee_prefer_cex(s, s->st_nlink == 1);
-  klee_prefer_cex(s, s->st_uid == defaults->st_uid);
-  klee_prefer_cex(s, s->st_gid == defaults->st_gid);
-  klee_prefer_cex(s, s->st_blksize == 4096);
-  klee_prefer_cex(s, s->st_atime == defaults->st_atime);
-  klee_prefer_cex(s, s->st_mtime == defaults->st_mtime);
-  klee_prefer_cex(s, s->st_ctime == defaults->st_ctime);
+  engine_prefer_cex(s, !(s->st_mode & ~(S_IFMT | 0777)));
+  engine_prefer_cex(s, s->st_dev == defaults->st_dev);
+  engine_prefer_cex(s, s->st_rdev == defaults->st_rdev);
+  engine_prefer_cex(s, (s->st_mode&0700) == 0600);
+  engine_prefer_cex(s, (s->st_mode&0070) == 0040);
+  engine_prefer_cex(s, (s->st_mode&0007) == 0004);
+  engine_prefer_cex(s, (s->st_mode&S_IFMT) == S_IFREG);
+  engine_prefer_cex(s, s->st_nlink == 1);
+  engine_prefer_cex(s, s->st_uid == defaults->st_uid);
+  engine_prefer_cex(s, s->st_gid == defaults->st_gid);
+  engine_prefer_cex(s, s->st_blksize == 4096);
+  engine_prefer_cex(s, s->st_atime == defaults->st_atime);
+  engine_prefer_cex(s, s->st_mtime == defaults->st_mtime);
+  engine_prefer_cex(s, s->st_ctime == defaults->st_ctime);
 
   s->st_size = dfile->size;
   s->st_blocks = 8;
@@ -98,15 +98,15 @@ static void __create_new_dfile(exe_disk_file_t *dfile, unsigned size,
 
 static unsigned __sym_uint32(const char *name) {
   unsigned x;
-  klee_make_symbolic(&x, sizeof x, name);
+  engine_make_symbolic(&x, sizeof x, name);
   return x;
 }
 
 /* n_files: number of symbolic input files, excluding stdin
    file_length: size in bytes of each symbolic file, including stdin
    sym_stdout_flag: 1 if stdout should be symbolic, 0 otherwise
-   save_all_writes_flag: 1 if all writes are executed as expected, 0 if 
-                         writes past the initial file size are discarded 
+   save_all_writes_flag: 1 if all writes are executed as expected, 0 if
+                         writes past the initial file size are discarded
 			 (file offset is always incremented)
    max_failures: maximum number of system call failures */
 void klee_init_fds(unsigned n_files, unsigned file_length,
@@ -121,18 +121,18 @@ void klee_init_fds(unsigned n_files, unsigned file_length,
   __exe_fs.n_sym_files = n_files;
   __exe_fs.sym_files = malloc(sizeof(*__exe_fs.sym_files) * n_files);
   if (n_files && !__exe_fs.sym_files)
-    klee_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
+    engine_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
 
   for (k=0; k < n_files; k++) {
     name[0] = 'A' + k;
     __create_new_dfile(&__exe_fs.sym_files[k], file_length, name, &s);
   }
-  
+
   /* setting symbolic stdin */
   if (stdin_length) {
     __exe_fs.sym_stdin = malloc(sizeof(*__exe_fs.sym_stdin));
     if (!__exe_fs.sym_stdin)
-      klee_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
+      engine_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
     __create_new_dfile(__exe_fs.sym_stdin, stdin_length, "stdin", &s);
     __exe_env.fds[0].dfile = __exe_fs.sym_stdin;
   }
@@ -147,27 +147,27 @@ void klee_init_fds(unsigned n_files, unsigned file_length,
     __exe_fs.getcwd_fail = malloc(sizeof(*__exe_fs.getcwd_fail));
     if (!(__exe_fs.read_fail && __exe_fs.write_fail && __exe_fs.close_fail
           && __exe_fs.ftruncate_fail && __exe_fs.getcwd_fail))
-      klee_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
+      engine_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
 
-    klee_make_symbolic(__exe_fs.read_fail, sizeof(*__exe_fs.read_fail), "read_fail");
-    klee_make_symbolic(__exe_fs.write_fail, sizeof(*__exe_fs.write_fail), "write_fail");
-    klee_make_symbolic(__exe_fs.close_fail, sizeof(*__exe_fs.close_fail), "close_fail");
-    klee_make_symbolic(__exe_fs.ftruncate_fail, sizeof(*__exe_fs.ftruncate_fail), "ftruncate_fail");
-    klee_make_symbolic(__exe_fs.getcwd_fail, sizeof(*__exe_fs.getcwd_fail), "getcwd_fail");
+    engine_make_symbolic(__exe_fs.read_fail, sizeof(*__exe_fs.read_fail), "read_fail");
+    engine_make_symbolic(__exe_fs.write_fail, sizeof(*__exe_fs.write_fail), "write_fail");
+    engine_make_symbolic(__exe_fs.close_fail, sizeof(*__exe_fs.close_fail), "close_fail");
+    engine_make_symbolic(__exe_fs.ftruncate_fail, sizeof(*__exe_fs.ftruncate_fail), "ftruncate_fail");
+    engine_make_symbolic(__exe_fs.getcwd_fail, sizeof(*__exe_fs.getcwd_fail), "getcwd_fail");
   }
 
   /* setting symbolic stdout */
   if (sym_stdout_flag) {
     __exe_fs.sym_stdout = malloc(sizeof(*__exe_fs.sym_stdout));
     if (!__exe_fs.sym_stdout)
-      klee_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
+      engine_report_error(__FILE__, __LINE__, "out of memory in klee_init_env", "user.err");
     __create_new_dfile(__exe_fs.sym_stdout, 1024, "stdout", &s);
     __exe_env.fds[1].dfile = __exe_fs.sym_stdout;
     __exe_fs.stdout_writes = 0;
   }
   else __exe_fs.sym_stdout = NULL;
-  
+
   __exe_env.save_all_writes = save_all_writes_flag;
   __exe_env.version = __sym_uint32("model_version");
-  klee_assume(__exe_env.version == 1);
+  engine_assume(__exe_env.version == 1);
 }

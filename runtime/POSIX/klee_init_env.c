@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "klee/klee.h"
+#include "posix-runtime/engine_api.h"
 #ifndef _LARGEFILE64_SOURCE
 #define _LARGEFILE64_SOURCE
 #endif
@@ -18,7 +18,7 @@
 #include <assert.h>
 
 static void __emit_error(const char *msg) {
-  klee_report_error(__FILE__, __LINE__, msg, "user.err");
+  engine_report_error(__FILE__, __LINE__, msg, "user.err");
 }
 
 /* Helper function that converts a string to an integer, and
@@ -61,11 +61,11 @@ static char *__get_sym_str(int numChars, char *name) {
   char *s = malloc(numChars+1);
   if (!s)
     __emit_error("out of memory in klee_init_env");
-  klee_mark_global(s);
-  klee_make_symbolic(s, numChars+1, name);
+  engine_mark_global(s);
+  engine_make_symbolic(s, numChars+1, name);
 
   for (i=0; i<numChars; i++)
-    klee_posix_prefer_cex(s, __isprint(s[i]));
+    engine_posix_prefer_cex(s, __isprint(s[i]));
 
   s[numChars] = '\0';
   return s;
@@ -150,11 +150,11 @@ usage: (klee_init_env) [options] [program arguments]\n\
       if ((min_argvs > max_argvs) || (min_argvs == 0 && max_argvs == 0))
         __emit_error("Invalid range to --sym-args");
 
-      n_args = klee_range(min_argvs, max_argvs + 1, "n_args");
+      n_args = engine_range(min_argvs, max_argvs + 1, "n_args");
 
       if (sym_arg_num + max_argvs > 99)
         __emit_error("No more than 100 symbolic arguments allowed.");
-      
+
       for (i = 0; i < n_args; i++) {
         sym_arg_name[3] = '0' + sym_arg_num / 10;
         sym_arg_name[4] = '0' + sym_arg_num % 10;
@@ -224,7 +224,7 @@ usage: (klee_init_env) [options] [program arguments]\n\
   final_argv = (char **)malloc((new_argc + 1) * sizeof(*final_argv));
   if (!final_argv)
     __emit_error("out of memory in klee_init_env");
-  klee_mark_global(final_argv);
+  engine_mark_global(final_argv);
   memcpy(final_argv, new_argv, new_argc * sizeof(*final_argv));
   final_argv[new_argc] = 0;
 
