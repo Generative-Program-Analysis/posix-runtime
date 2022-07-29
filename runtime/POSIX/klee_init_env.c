@@ -43,7 +43,8 @@ static long int __str_to_int(char *s, const char *error_msg) {
 
 static int __isprint(const char c) {
   /* Assume ASCII */
-  return (32 <= c && c <= 126);
+  // Note: is the switch from short circuit operator && to its bitwise counterparts & correct?
+  return ((32 <= c) & (c <= 126));
 }
 
 static int __streq(const char *a, const char *b) {

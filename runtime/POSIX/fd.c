@@ -1378,9 +1378,13 @@ char *getcwd(char *buf, size_t size) {
 
 static void *__concretize_ptr(const void *p) {
   /* XXX 32-bit assumption */
-  if (engine_is_symbolic(p))
+  // Note: disabling concretize pointer
+  //char *pc = (char*) engine_get_valuel((long) p);
+  //engine_assume(pc == p);
+  //return pc;
+  if (engine_is_symbolic((uintptr_t)p))
     engine_report_error(__FILE__, __LINE__, "ERROR: concretizing symbolic pointer", "user.err");
-  return p;
+  return (void *)p;
 }
 
 static size_t __concretize_size(size_t s) {
