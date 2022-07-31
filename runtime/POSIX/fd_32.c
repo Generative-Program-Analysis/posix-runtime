@@ -198,7 +198,9 @@ int getdents(int fd, char *dirp, int nbytes) {
 
   return res;
 }
-int __getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
+// Todo: roll back to the old version when we support bitcast attribute in function alias.
+// int __getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
+ssize_t __getdents(unsigned int fd, struct dirent *dirp, size_t count)
      __attribute__((alias("getdents")));
 
 /* Forward to 64 versions (uclibc expects versions w/o asm specifier) */
