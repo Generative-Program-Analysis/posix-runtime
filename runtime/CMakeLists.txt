@@ -15,7 +15,7 @@ set(bc_architectures 64)
 
 set(available_engine_types
   "klee"
-  "llsc"
+  "gensym"
 )
 
 set(LIB_BC_PREFIX ${available_engine_types})

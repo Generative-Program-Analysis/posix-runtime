@@ -26,19 +26,19 @@
   #define engine_mark_global(object)                        klee_mark_global(object)
   #define engine_silent_exit(status)                        klee_silent_exit(status)
 #else
-  #include @ABSOLUTE_LLSC_H_PATH@
-  #define engine_report_error(file, line, message, suffix)  llsc_report_error(file, line, message, suffix)
-  #define engine_warning(message)                           llsc_warning(message)
-  #define engine_warning_once(message)                      llsc_warning_once(message)
-  #define engine_make_symbolic(addr, nbytes, name)          llsc_make_symbolic(addr, nbytes, name)
-  #define engine_is_symbolic(n)                             llsc_is_symbolic(n)
-  #define engine_assume(condition)                          llsc_assume(condition)
-  #define engine_range(begin, end, name)                    llsc_range(begin, end, name)
-  #define engine_get_valuel(expr)                           llsc_get_valuel(expr)
-  #define engine_prefer_cex(object, condition)              llsc_prefer_cex(object, condition)
-  #define engine_posix_prefer_cex(object, ucondition)       llsc_posix_prefer_cex(object, ucondition)
-  #define engine_check_memory_access(address, size)         //llsc_check_memory_access(address, size)
-  #define engine_mark_global(object)                        //llsc_mark_global(object)
+  #include @ABSOLUTE_GENSYM_H_PATH@
+  #define engine_report_error(file, line, message, suffix)  gs_report_error(file, line, message, suffix)
+  #define engine_warning(message)                           gs_warning(message)
+  #define engine_warning_once(message)                      gs_warning_once(message)
+  #define engine_make_symbolic(addr, nbytes, name)          gs_make_symbolic(addr, nbytes, name)
+  #define engine_is_symbolic(n)                             gs_is_symbolic(n)
+  #define engine_assume(condition)                          gs_assume(condition)
+  #define engine_range(begin, end, name)                    gs_range(begin, end, name)
+  #define engine_get_valuel(expr)                           gs_get_valuel(expr)
+  #define engine_prefer_cex(object, condition)              gs_prefer_cex(object, condition)
+  #define engine_posix_prefer_cex(object, ucondition)       gs_posix_prefer_cex(object, ucondition)
+  #define engine_check_memory_access(address, size)         //gs_check_memory_access(address, size)
+  #define engine_mark_global(object)                        //gs_mark_global(object)
   #define engine_silent_exit(status)                        stop(status)
 #endif
 
